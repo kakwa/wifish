@@ -1,0 +1,13 @@
+ctrl_interface=/var/run/wpa_supplicant
+network={
+   ssid="$_ESSID"
+   key_mgmt=WPA-EAP
+   pairwise=TKIP
+   group=TKIP
+   eap=TLS
+   identity="$_IDENTITY"
+   ca_cert="$_CA_CERT"
+   client_cert="$_CLIENT_CERT"
+   private_key="$_PRIVATE_KEY"
+   private_key_passwd="$_PRIVATE_KEY_PASSWD"
+}
