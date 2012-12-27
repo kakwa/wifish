@@ -4,9 +4,22 @@ interface="wlan0"
 #default configuration file
 DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
 
+help(){
+    echo
+    echo "`basename $0` configures a wifi network or connects your computer to it"
+    echo
+    echo "usage: `basename $0` [-h] [-f <path/to/configuration/file>] [-n <network's name>]"
+    echo
+    echo "without option it prompts you forms to configure a network"
+    echo "-h: displays this help"
+    echo "-f: permits to specifies another configuration file"
+    echo "-n: permits the connexion to an already configured network"
+    echo
+}
+
 test_file(){
     local file=$1
-    if ! [ -a $file ]
+    if ! [ -e $file ]
     then
         echo "[ERROR] $file doesn't exist"
         exit 1
@@ -15,7 +28,7 @@ test_file(){
 
 choose_and_configure(){
     #we need some template to create the .cfg
-    if ! [ -d /etc/wpa_supplicant/templates ]
+    if ! [ -d $TEMPLATES_DIR ]
     then 
 	    echo "missing /etc/wpa_supplicant/templates/"
 	    echo "(template directory)"
@@ -23,42 +36,41 @@ choose_and_configure(){
     fi
 
     #just to be sure
-    mkdir -p /etc/wpa_supplicant/networks/
+    mkdir -p $USER_NETWORK_DIR
 
 
     #create the menu listing the APs, return the chosen essid (ugly line I know)
-    result=`iwlist $interface  scan |grep "ESSID\|WPA\|WEP\|Signal"|\
+    NETWORK=`iwlist $IWLAN  scan |grep "ESSID\|WPA\|WEP\|Signal"|\
 	    sed "s/^\ .*/&aaaa/"|sed "s/Quality.*/\n&/"|sed "s/^\ *&//"\
 	    |sed "s/\ *//"| sed ':a;N;$!ba;s/aaaa\n/ /g'|sed s/aaaa//|\
 	    sed "s/  Signal level=.*dBm//" |dmenu -l 5|sed s/.*:\"//|\
 	    sed "s/\".*//"`
 
     #if no network is selected
-    if [ "$result" = "" ]
+    if [ "$NETWORK" = "" ]
     then 
 	    echo "no network selected"
 	    exit 0
     fi
 
     #if the essid is not configure, ask for configuration.
-    if ! [ -f /etc/wpa_supplicant/networks/$result.cfg ]
+    if ! [ -f /etc/wpa_supplicant/networks/$NETWORK.cfg ]
     then
 	    #choose the template from the templates directory
-	    type=`ls /etc/wpa_supplicant/templates|dmenu -l 5`
+	    type=`ls $TEMPLATES_DIR|dmenu -l 5`
 
 	    #copy the template
-	    cp /etc/wpa_supplicant/templates/$type\
-		    /etc/wpa_supplicant/networks/$result.cfg
+	    cp $TEMPLATES_DIR/$type $USER_NETWORK_DIR/$NETWORK.cfg
 
 	    #set restrited access (clear passwd)
-	    chown root:root /etc/wpa_supplicant/networks/$result.cfg
-	    chmod 600 /etc/wpa_supplicant/networks/$result.cfg
+	    chown root:root $USER_NETWORK_DIR/$NETWORK.cfg
+	    chmod 600 $USER_NETWORK_DIR/$NETWORK.cfg
 
  	    #configure the ESSID in the template copy
-	    sed -i  "s/\$_ESSID/$result/g" /etc/wpa_supplicant/networks/$result.cfg
+	    sed -i  "s/\$_ESSID/$NETWORK/g" $USER_NETWORK_DIR/$NETWORK.cfg
 
 	    #get the other parameters name
-	    arglist=`grep "\\$_" /etc/wpa_supplicant/templates/$type|grep -v ESSID |\
+	    arglist=`grep "\\$_" $TEMPLATES_DIR/$type|grep -v ESSID |\
 	    sed "s/^.*=//"|sed "s/\"//g"` 	 				
 
 	    for i in $arglist;
@@ -72,22 +84,22 @@ choose_and_configure(){
 reinit(){
 #reinitialization of the wlan interface
 
-    if [ -f /var/run/wpa_supplicant/$interface.pid ]
+    if [ -f $WPA_SUPPLICANT_PID_FILE ]
     then
-	    kill `cat /var/run/wpa_supplicant/$interface.pid`
-	    touch /var/run/wpa_supplicant/$interface
-	    rm /var/run/wpa_supplicant/$interface 
+	    kill `cat $WPA_SUPPLICANT_PID_FILE`
+	    rm $WPA_SUPPLICANT_PID_FILE
     fi
 
     ifconfig $interface down
     ifconfig $interface up
-    iwconfig $interface power off
+    #iwconfig $interface power off
 
-    if [ -f /var/run/dhcpcd-$interface.pid ]
+    if [ -f $DHCP_PID_FILE ]
     then
-	    pid=`cat /var/run/dhcpcd-$interface.pid` 
+	    pid=`cat $DHCP_PID_FILE` 
 	    #kill dhcpcd on $interface
 	    kill  $pid 
+        rm $DHCP_PID_FILE
     fi
 }
 
@@ -98,7 +110,7 @@ start_wifi(){
     #start wpa supplicant
     wpa_supplicant -B -Dwext -i$IWLAN \
 	    -c$USER_NETWORK_DIR/$NETWORK.cfg \
-	    -P $PID_DIRECTORY/$IWLAN.pid
+	    -P $WPA_SUPPLICANT_PID_FILE
 
     #wait some seconds, to be sure wpa_supplicant has made its job
     sleep 2
@@ -112,6 +124,7 @@ while getopts ":hf:n:" opt; do
 
     h) 
         help
+        exit 0
         ;;
     f)
         CONFIG_FILE=`readlink -m $OPTARG`
@@ -132,6 +145,12 @@ while getopts ":hf:n:" opt; do
         ;;
   esac
 done
+
+if [ `id -u` -ne 0 ]
+then
+    echo "[ERROR] must be run as root"
+    exit 1
+fi
 
 if [ -z "$CONFIG_FILE" ]
 then CONFIG_FILE="$DEFAULT_CONFIG_FILE"
