@@ -1,16 +1,17 @@
 #!/bin/sh
 
-mkdir -p /var/run/wifid/
-echo $$ >/var/run/wifid/wifid.pid
+DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
 
-wnet="wlan0"
+mkdir -p /var/run/wifishd/
+echo $$ >/var/run/wifid/wifishd.pid
+
 not_associated=1
 ESSID=""
 
 #function testing if we are associated with an AP
 function is_not_associated(){
-	ifconfig $wnet up
-	test=`iwconfig $wnet|grep "Access Point"`
+	ifconfig $IWLAN up
+	test=`iwconfig $IWLAN|grep "Access Point"`
 	state=`echo $test |sed "s/.*Point:\ *//"|sed "s/\ *Tx-Power.*//"`
 	if [ "$state" = 'Not-Associated' ];
 	then
@@ -22,11 +23,11 @@ function is_not_associated(){
 
 #function scanning the APs and returning the first that has been configured
 function search_AP(){
-AP_list=`iwlist $wnet  scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
+AP_list=`iwlist $IWLAN  scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
 
 for i in $AP_list;
 	do
-		if [ -f /etc/wpa_supplicant/networks/$i.cfg ]
+		if [ -f $USER_NETWORK_DIR/$i.cfg ]
 		then
 			ESSID=$i
 			return
@@ -45,7 +46,7 @@ do
 		search_AP
 		if ! [ "$ESSID" = "" ]
 		then
-			wifi-shell $ESSID
+			wifish-cfg $ESSID
 		fi
 	fi
 done
