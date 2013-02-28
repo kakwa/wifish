@@ -41,7 +41,7 @@ for i in $AP_list;
 #infinite loop
 while [ 1 ];
 do
-	sleep 5
+	sleep 30
 	is_not_associated
 	if [ $not_associated -eq 1 ];
 	then
