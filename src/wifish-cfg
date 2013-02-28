@@ -90,8 +90,13 @@ reinit(){
 	    rm $WPA_SUPPLICANT_PID_FILE
     fi
 
-    ifconfig $IWLAN down
-    ifconfig $IWLAN up
+    ifconfig | grep -q $IWLAN
+    ret=$?
+    if [ $ret -ne 0 ]
+    then
+        ifconfig $IWLAN up
+        sleep 5
+    fi
     #iwconfig $interface power off
 
     if [ -f $DHCP_PID_FILE ]
@@ -101,7 +106,6 @@ reinit(){
 	    kill  $pid 
         rm $DHCP_PID_FILE
     fi
-    sleep 3
 }
 
 start_wifi(){
