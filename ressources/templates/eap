@@ -1,7 +1,6 @@
 ctrl_interface=/var/run/wpa_supplicant
 network={
 	ssid="$_ESSID"
-	scan_ssid=$_SCAN
 	proto=RSN WPA
 	pairwise=CCMP TKIP
 	group=CCMP TKIP
