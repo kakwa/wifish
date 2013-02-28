@@ -3,13 +3,13 @@
 DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
 
 mkdir -p /var/run/wifishd/
-echo $$ >/var/run/wifid/wifishd.pid
+echo $$ >/var/run/wifishd/wifishd.pid
 
 not_associated=1
 ESSID=""
 
 #function testing if we are associated with an AP
-function is_not_associated(){
+is_not_associated(){
 	ifconfig $IWLAN up
 	test=`iwconfig $IWLAN|grep "Access Point"`
 	state=`echo $test |sed "s/.*Point:\ *//"|sed "s/\ *Tx-Power.*//"`
@@ -22,8 +22,8 @@ function is_not_associated(){
 }
 
 #function scanning the APs and returning the first that has been configured
-function search_AP(){
-AP_list=`iwlist $IWLAN  scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
+search_AP(){
+AP_list=`iwlist $IWLAN scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
 
 for i in $AP_list;
 	do
@@ -36,6 +36,8 @@ for i in $AP_list;
 	ESSID=""
 }
 
+. $DEFAULT_CONFIG_FILE
+
 #infinite loop
 while [ 1 ];
 do
@@ -46,7 +48,7 @@ do
 		search_AP
 		if ! [ "$ESSID" = "" ]
 		then
-			wifish-cfg $ESSID
+			wifish-cfg -n $ESSID
 		fi
 	fi
 done
