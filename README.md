@@ -59,7 +59,7 @@ The Variables are marked by `$_<VARIABLE_NAME>`
 ## Dependancies ##
 
 Wifish relies on `dmenu`, `iwlist`, `wpa_supplicant`, 
-`iwconfig`, a dhcp client (test with `dhclient`) and `ifconfig`.
+`iwconfig`, a dhcp client (tested with `dhclient`) and `ifconfig`.
 
 ## Sudo configuration ##
 
