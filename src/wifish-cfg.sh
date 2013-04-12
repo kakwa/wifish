@@ -60,7 +60,7 @@ choose_and_configure(){
     #just to be sure
     mkdir -p $USER_NETWORK_DIR
 
-    simple_logger debug "scanning networks"
+    simple_logger info "scanning networks"
 
     #create the menu listing the APs, return the chosen essid (ugly line I know)
     NETWORK=`iwlist $IWLAN  scan |grep "ESSID\|WPA\|WEP\|Signal"|\
@@ -211,10 +211,12 @@ NUM_LOG_LEVEL=`get_level_number $LOG_LEVEL`
 
 if [ "$NETWORK" = "" ]
 then
+    LOG_OPT="-s"
     choose_and_configure
     reinit
     start_wifi
 else
+    LOG_OPT=""
     reinit
     start_wifi
 fi

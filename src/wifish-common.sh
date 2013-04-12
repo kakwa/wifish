@@ -19,7 +19,7 @@ simple_logger(){
     lev=`get_level_number $1`
     if [ $lev -le $NUM_LOG_LEVEL ]
     then
-        logger -t wifish -p  user.$1 $2
+        logger $LOG_OPT -t wifish -p  user.$1 $2
     fi
 }
 
