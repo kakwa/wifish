@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>Wifish by kakwa</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Wifish</h1>
+        <h2>wifish are small scripts to get ride of wicd/NetworkManager</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/kakwa/wifish/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/kakwa/wifish/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/kakwa/wifish" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>Wifish</h1>
+
+<p>Wifish is two small scripts to get ride of wicd/NetworkManager.</p>
+
+<h2>License</h2>
+
+<p>Wifish is released under the MIT Public License</p>
+
+<h2>Description</h2>
+
+<p>Wifish is two main things:</p>
+
+<ul>
+<li><p>wifish-cfg: a command that handles connexion.
+in interactive mode, it proposes the available networks, 
+user select one, if the network has never been chosen, 
+it interactively configures it (it creates a wpa_supplicant 
+configuration file), and it establishes a connexion with this network.</p></li>
+<li><p>wifishd: a daemon that scans regulary networks and connects 
+to one if it's already configured.</p></li>
+</ul><p>It also installs <code>wifish</code> which is a simple wrapper arround <code>sudo wifish-cfg</code>.</p>
+
+<h2>Installation</h2>
+
+<p>Just run as root:</p>
+
+<pre><code>make install
+</code></pre>
+
+<h2>Configuration</h2>
+
+<p>Some parameters could be configured in <code>/etc/wifish/wifish.conf</code> (default location).</p>
+
+<p>The configured networks are stored in <code>/etc/wifish/networks/</code>.</p>
+
+<h2>Template</h2>
+
+<p>The template directory is <code>/etc/wifish/templates/</code>.</p>
+
+<p>Template format is the following:</p>
+
+<pre><code>ctrl_interface=/var/run/wpa_supplicant
+network={
+    ssid="$_ESSID"
+    key_mgmt=WPA-EAP
+    eap=TTLS
+    identity="$_IDENTITY"
+    anonymous_identity="anonymous"
+    password="$_PASSWORD"
+    phase2="auth=PAP"
+}
+</code></pre>
+
+<p>The Variables are marked by <code>$_&lt;VARIABLE_NAME&gt;</code></p>
+
+<h2>Dependancies</h2>
+
+<p>Wifish relies on <code>dmenu</code>, <code>iwlist</code>, <code>wpa_supplicant</code>, 
+<code>iwconfig</code>, a dhcp client (tested with <code>dhclient</code>) and <code>ifconfig</code>.</p>
+
+<h2>Sudo configuration</h2>
+
+<p>If you don't trust my script, it should be run as root.</p>
+
+<p>If you trust my script (you shouldn't) you could 
+add something like that in your /etc/sudoers:</p>
+
+<pre><code>ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
+</code></pre>
+
+<p>Now, you can run wifish as a normal user</p>
+
+<div class="highlight"><pre>me@my-host <span class="c"># wifish</span>
+</pre></div>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
