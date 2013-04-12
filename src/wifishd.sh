@@ -1,7 +1,7 @@
-#!/bin/sh
-
+#path to the default configuration file
 DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
 
+#creation of the pid file
 mkdir -p /var/run/wifishd/
 echo $$ >/var/run/wifishd/wifishd.pid
 
@@ -23,9 +23,9 @@ is_not_associated(){
 
 #function scanning the APs and returning the first that has been configured
 search_AP(){
-AP_list=`iwlist $IWLAN scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
+    AP_list=`iwlist $IWLAN scan |grep "ESSID"|sed s/ESSID:\"//|sed "s/\"//"`
 
-for i in $AP_list;
+    for i in $AP_list;
 	do
 		if [ -f $USER_NETWORK_DIR/$i.cfg ]
 		then
@@ -36,19 +36,27 @@ for i in $AP_list;
 	ESSID=""
 }
 
+#load the configuration
 . $DEFAULT_CONFIG_FILE
 
+make_interface_up
 #infinite loop
 while [ 1 ];
 do
-	sleep 30
+    #every 30 secondes, it tests if laptop is assiociated with a network
+    echo "one"
 	is_not_associated
 	if [ $not_associated -eq 1 ];
 	then
+        #if we are not, it searches a network
 		search_AP
 		if ! [ "$ESSID" = "" ]
 		then
+            #if it has found one, it launch wifish-cfg to connect to it
 			wifish-cfg -n $ESSID
+            #reset of $ESSID
+            ESSID=""
 		fi
 	fi
+	sleep 30
 done

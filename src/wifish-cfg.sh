@@ -1,9 +1,10 @@
-#!/bin/sh
 interface="wlan0"
 
 #default configuration file
 DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
+LOG_LEVEL=7
 
+#a small help function
 help(){
     echo
     echo "`basename $0` configures a wifi network or connects your computer to it"
@@ -17,39 +18,61 @@ help(){
     echo
 }
 
+#a small function selecting a separator for sed
+select_separator(){
+    local potental_separators="@ \` ! # $ % & : ; + { , < / | - = ] } . > ^ ~ ? _"
+    for sep in `echo "$potental_separators"`
+    do
+        echo "$sep"
+        echo "$1" |grep -vq "$sep"
+        ret=$?
+        if [ $ret -eq 0 ]
+        then
+            echo "$sep"
+            return 0
+        fi
+    done
+    simple_logger err "no separator found (you're an evil doer)"
+    exit 1
+}
+
+#test the existance of a file + print error and exit 1 if file doesn't exist
 test_file(){
     local file=$1
     if ! [ -e $file ]
     then
-        echo "[ERROR] $file doesn't exist"
+        simple_logger err "$file doesn't exist"
         exit 1
     fi
 }
 
+#create a selection menu of available networks
+#if the selected network doesn't have a configuration
+#it interactively configures it
 choose_and_configure(){
     #we need some template to create the .cfg
     if ! [ -d $TEMPLATES_DIR ]
     then 
-	    echo "missing /etc/wpa_supplicant/templates/"
-	    echo "(template directory)"
+        simple_logger err "missing $TEMPLATES_DIR (template directory)"
 	    exit 1 
     fi
 
     #just to be sure
     mkdir -p $USER_NETWORK_DIR
-
+    
+    simple_logger debug "scanning networks"
 
     #create the menu listing the APs, return the chosen essid (ugly line I know)
     NETWORK=`iwlist $IWLAN  scan |grep "ESSID\|WPA\|WEP\|Signal"|\
-	    sed "s/^\ .*/&aaaa/"|sed "s/Quality.*/\n&/"|sed "s/^\ *&//"\
-	    |sed "s/\ *//"| sed ':a;N;$!ba;s/aaaa\n/ /g'|sed s/aaaa//|\
-	    sed "s/  Signal level=.*dBm//" |dmenu -l 5|sed s/.*:\"//|\
+	    sed "s/^\ .*/&azp5/"|sed "s/Quality.*/\n&/"|sed "s/^\ *&//"\
+	    |sed "s/\ *//"| sed ':a;N;$!ba;s/azp5\n/ /g'|sed s/azp5//|\
+	    sed "s/  Signal level=.*dBm//"|sort -r|dmenu -l 5|sed s/.*:\"//|\
 	    sed "s/\".*//"`
 
     #if no network is selected
     if [ "$NETWORK" = "" ]
     then 
-	    echo "no network selected"
+        simple_logger warning  "no network selected by user"
 	    exit 0
     fi
 
@@ -67,7 +90,8 @@ choose_and_configure(){
 	    chmod 600 $USER_NETWORK_DIR/$NETWORK.cfg
 
  	    #configure the ESSID in the template copy
-	    sed -i  "s/\$_ESSID/$NETWORK/g" $USER_NETWORK_DIR/$NETWORK.cfg
+        sep=`select_separator "$NETWORK"`
+	    sed -i  s${sep}\$_ESSID${sep}$NETWORK${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
 
 	    #get the other parameters name
 	    arglist=`grep "\\$_" $TEMPLATES_DIR/$type|grep -v ESSID |\
@@ -75,32 +99,36 @@ choose_and_configure(){
 
 	    for i in $arglist;
 	    do
+            arg_name=`echo $i|sed "s/\$_//"`
 		    #configure parameter in the template copy
-		    data=`echo ""|dmenu -p "$i:"` #ask parameter
-		    sed -i "s/$i/$data/g" $USER_NETWORK_DIR/$NETWORK.cfg
+		    data=`echo ""|dmenu -p "$arg_name:"` #ask parameter
+            sep=`select_separator "$data"`
+		    sed -i s${sep}$i${sep}$data${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
 	    done
+        simple_logger info "$NETWORK configured by user"
     fi
 }
-reinit(){
-#reinitialization of the wlan interface
 
+#reinitialization of the wlan interface
+reinit(){
+    #it stops the wpa_supplicant process
+    #if it exists
     if [ -f $WPA_SUPPLICANT_PID_FILE ]
     then
+        simple_logger info  "stopping the former connexion"
 	    kill `cat $WPA_SUPPLICANT_PID_FILE`
 	    rm $WPA_SUPPLICANT_PID_FILE
     fi
 
-    ifconfig | grep -q $IWLAN
-    ret=$?
-    if [ $ret -ne 0 ]
-    then
-        ifconfig $IWLAN up
-        sleep 5
-    fi
-    #iwconfig $interface power off
+    #if wlan interface is down,
+    #it ups it and wait few seconds
+    make_interface_up
 
+    #it stop the dhcp client process
+    #if it exists
     if [ -f $DHCP_PID_FILE ]
     then
+        simple_logger debug  "stopping the dhcp client"
 	    pid=`cat $DHCP_PID_FILE` 
 	    #kill dhcpcd on $interface
 	    kill  $pid 
@@ -108,35 +136,49 @@ reinit(){
     fi
 }
 
+
+
 start_wifi(){
 
+    simple_logger info  "connecting to network \"$NETWORK\""
     test_file $USER_NETWORK_DIR/$NETWORK.cfg
 
     #start wpa supplicant
+    simple_logger debug "starting wpa_supplicant"
     wpa_supplicant -B -Dwext -i$IWLAN \
 	    -c$USER_NETWORK_DIR/$NETWORK.cfg \
-	    -P $WPA_SUPPLICANT_PID_FILE
+	    -P $WPA_SUPPLICANT_PID_FILE 2>/dev/null
 
-    #wait some seconds, to be sure wpa_supplicant has made its job
-    sleep 2
+    #wait until interface is associated, to be sure wpa_supplicant has made its job
+    simple_logger debug "testing if $IWLAN is associated"
+    ret=0
+    while [ $ret -eq 0 ]
+    do
+        test_interface_associated
+        ret=$?
+    done
 
-    #start dhcpcd on the new connection
-    $DHCP_CMD $interface 
+
+    simple_logger debug "starting dhcp client"
+    #start the dhcp client on the new connection
+    $DHCP_CMD $interface  2>/dev/null
 }
 
 while getopts ":hf:n:" opt; do
   case $opt in
 
     h) 
+        #display the help
         help
         exit 0
         ;;
     f)
+        #path to the configuration file
         CONFIG_FILE=`readlink -m $OPTARG`
         ;;
     n)
-        #genautoo configuration file
-        NETWORK=`readlink -m $OPTARG`
+        #the name of the network
+        NETWORK=$OPTARG
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -165,10 +207,12 @@ test_file $CONFIG_FILE
 
 . $CONFIG_FILE
 
+NUM_LOG_LEVEL=`get_level_number $LOG_LEVEL`
+
 if [ "$NETWORK" = "" ]
 then
-	reinit
 	choose_and_configure
+	reinit
 	start_wifi
 else
 	reinit
