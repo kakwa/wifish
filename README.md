@@ -13,7 +13,7 @@ Wifish is two main things:
 - wifish-cfg: a command that handles connexion.
  in interactive mode, it proposes the available networks, 
 user select one, if the network has never been chosen, 
-it interactively configures it (it creates a wpa\_supplicant 
+it interactively configures it (it creates a wpa_supplicant 
 configuration file), and it establishes a connexion with this network.
 
 - wifishd: a daemon that scans regulary networks and connects 
@@ -37,7 +37,7 @@ The configured networks are stored in ```/etc/wifish/networks/```.
 
 ## Template ##
 
-The template directory is ```/etc/wifish/templates```.
+The template directory is ```/etc/wifish/templates/```.
 
 Template format is the following:
 
@@ -54,11 +54,11 @@ network={
 }
 ```
 
-The Variables are marked by `$\_\<VARIABLE\_NAME\>`
+The Variables are marked by `$_<VARIABLE_NAME>`
 
 ## Dependancies ##
 
-Wifish relies on `dmenu`, `iwlist`, `wpa\_supplicant`, 
+Wifish relies on `dmenu`, `iwlist`, `wpa_supplicant`, 
 `iwconfig`, a dhcp client (test with `dhclient`) and `ifconfig`.
 
 ## Sudo configuration ##
