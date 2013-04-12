@@ -54,57 +54,57 @@ choose_and_configure(){
     if ! [ -d $TEMPLATES_DIR ]
     then 
         simple_logger err "missing $TEMPLATES_DIR (template directory)"
-	    exit 1 
+        exit 1 
     fi
 
     #just to be sure
     mkdir -p $USER_NETWORK_DIR
-    
+
     simple_logger debug "scanning networks"
 
     #create the menu listing the APs, return the chosen essid (ugly line I know)
     NETWORK=`iwlist $IWLAN  scan |grep "ESSID\|WPA\|WEP\|Signal"|\
-	    sed "s/^\ .*/&azp5/"|sed "s/Quality.*/\n&/"|sed "s/^\ *&//"\
-	    |sed "s/\ *//"| sed ':a;N;$!ba;s/azp5\n/ /g'|sed s/azp5//|\
-	    sed "s/  Signal level=.*dBm//"|sort -r|dmenu -l 5|sed s/.*:\"//|\
-	    sed "s/\".*//"`
+        sed "s/^\ .*/&azp5/"|sed "s/Quality.*/\n&/"|sed "s/^\ *&//"\
+        |sed "s/\ *//"| sed ':a;N;$!ba;s/azp5\n/ /g'|sed s/azp5//|\
+        sed "s/  Signal level=.*dBm//"|sort -r|dmenu -l 5|sed s/.*:\"//|\
+        sed "s/\".*//"`
 
     #if no network is selected
     if [ "$NETWORK" = "" ]
     then 
         simple_logger warning  "no network selected by user"
-	    exit 0
+        exit 0
     fi
 
     #if the essid is not configure, ask for configuration.
     if ! [ -f $USER_NETWORK_DIR/$NETWORK.cfg ]
     then
-	    #choose the template from the templates directory
-	    type=`ls $TEMPLATES_DIR|dmenu -l 5`
+        #choose the template from the templates directory
+        type=`ls $TEMPLATES_DIR|dmenu -l 5`
 
-	    #copy the template
-	    cp $TEMPLATES_DIR/$type $USER_NETWORK_DIR/$NETWORK.cfg
+        #copy the template
+        cp $TEMPLATES_DIR/$type $USER_NETWORK_DIR/$NETWORK.cfg
 
-	    #set restrited access (clear passwd)
-	    chown root:root $USER_NETWORK_DIR/$NETWORK.cfg
-	    chmod 600 $USER_NETWORK_DIR/$NETWORK.cfg
+        #set restrited access (clear passwd)
+        chown root:root $USER_NETWORK_DIR/$NETWORK.cfg
+        chmod 600 $USER_NETWORK_DIR/$NETWORK.cfg
 
- 	    #configure the ESSID in the template copy
+        #configure the ESSID in the template copy
         sep=`select_separator "$NETWORK"`
-	    sed -i  s${sep}\$_ESSID${sep}$NETWORK${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
+        sed -i  s${sep}\$_ESSID${sep}$NETWORK${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
 
-	    #get the other parameters name
-	    arglist=`grep "\\$_" $TEMPLATES_DIR/$type|grep -v ESSID |\
-	    sed "s/^.*=//"|sed "s/\"//g"` 	 				
+        #get the other parameters name
+        arglist=`grep "\\$_" $TEMPLATES_DIR/$type|grep -v ESSID |\
+            sed "s/^.*=//"|sed "s/\"//g"` 	 				
 
-	    for i in $arglist;
-	    do
+        for i in $arglist;
+        do
             arg_name=`echo $i|sed "s/\$_//"`
-		    #configure parameter in the template copy
-		    data=`echo ""|dmenu -p "$arg_name:"` #ask parameter
+            #configure parameter in the template copy
+            data=`echo ""|dmenu -p "$arg_name:"` #ask parameter
             sep=`select_separator "$data"`
-		    sed -i s${sep}$i${sep}$data${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
-	    done
+            sed -i s${sep}$i${sep}$data${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
+        done
         simple_logger info "$NETWORK configured by user"
     fi
 }
@@ -116,8 +116,8 @@ reinit(){
     if [ -f $WPA_SUPPLICANT_PID_FILE ]
     then
         simple_logger info  "stopping the former connexion"
-	    kill `cat $WPA_SUPPLICANT_PID_FILE`
-	    rm $WPA_SUPPLICANT_PID_FILE
+        kill `cat $WPA_SUPPLICANT_PID_FILE`
+        rm $WPA_SUPPLICANT_PID_FILE
     fi
 
     #if wlan interface is down,
@@ -129,9 +129,9 @@ reinit(){
     if [ -f $DHCP_PID_FILE ]
     then
         simple_logger debug  "stopping the dhcp client"
-	    pid=`cat $DHCP_PID_FILE` 
-	    #kill dhcpcd on $interface
-	    kill  $pid 
+        pid=`cat $DHCP_PID_FILE` 
+        #kill dhcpcd on $interface
+        kill  $pid 
         rm $DHCP_PID_FILE
     fi
 }
@@ -146,8 +146,8 @@ start_wifi(){
     #start wpa supplicant
     simple_logger debug "starting wpa_supplicant"
     wpa_supplicant -B -Dwext -i$IWLAN \
-	    -c$USER_NETWORK_DIR/$NETWORK.cfg \
-	    -P $WPA_SUPPLICANT_PID_FILE 2>/dev/null
+        -c$USER_NETWORK_DIR/$NETWORK.cfg \
+        -P $WPA_SUPPLICANT_PID_FILE 2>/dev/null
 
     #wait until interface is associated, to be sure wpa_supplicant has made its job
     simple_logger debug "testing if $IWLAN is associated"
@@ -165,32 +165,32 @@ start_wifi(){
 }
 
 while getopts ":hf:n:" opt; do
-  case $opt in
+    case $opt in
 
-    h) 
-        #display the help
-        help
-        exit 0
-        ;;
-    f)
-        #path to the configuration file
-        CONFIG_FILE=`readlink -m $OPTARG`
-        ;;
-    n)
-        #the name of the network
-        NETWORK=$OPTARG
-        ;;
-    \?)
-        echo "Invalid option: -$OPTARG" >&2
-        help
-        exit 1
-        ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-        help
-        exit 1
-        ;;
-  esac
+        h) 
+            #display the help
+            help
+            exit 0
+            ;;
+        f)
+            #path to the configuration file
+            CONFIG_FILE=`readlink -m $OPTARG`
+            ;;
+        n)
+            #the name of the network
+            NETWORK=$OPTARG
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            help
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            help
+            exit 1
+            ;;
+    esac
 done
 
 if [ `id -u` -ne 0 ]
@@ -211,10 +211,10 @@ NUM_LOG_LEVEL=`get_level_number $LOG_LEVEL`
 
 if [ "$NETWORK" = "" ]
 then
-	choose_and_configure
-	reinit
-	start_wifi
+    choose_and_configure
+    reinit
+    start_wifi
 else
-	reinit
-	start_wifi
+    reinit
+    start_wifi
 fi
