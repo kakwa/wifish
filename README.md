@@ -63,7 +63,7 @@ Wifish relies on `dmenu`, `iwlist`, `wpa_supplicant`,
 
 ## Sudo configuration ##
 
-If you don't trust my scrit, it should be run as root.
+If you don't trust my script, it should be run as root.
 
 If you trust my script (you shouldn't) you could 
 add something like that in your /etc/sudoers:
