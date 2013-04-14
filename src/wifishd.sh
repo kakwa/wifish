@@ -44,7 +44,6 @@ make_interface_up
 while [ 1 ];
 do
     #every 30 secondes, it tests if laptop is assiociated with a network
-    echo "one"
 	is_not_associated
 	if [ $not_associated -eq 1 ];
 	then
