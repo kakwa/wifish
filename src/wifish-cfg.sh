@@ -20,10 +20,9 @@ help(){
 
 #a small function selecting a separator for sed
 select_separator(){
-    local potental_separators="@ \` ! # $ % & : ; + { , < / | - = ] } . > ^ ~ ? _"
+    local potental_separators="@ ! # $ % & : ; + { , < / | - = ] } . > ^ ~ ? _"
     for sep in `echo "$potental_separators"`
     do
-        echo "$sep"
         echo "$1" |grep -vq "$sep"
         ret=$?
         if [ $ret -eq 0 ]
@@ -91,7 +90,7 @@ choose_and_configure(){
 
         #configure the ESSID in the template copy
         sep=`select_separator "$NETWORK"`
-        sed -i  s${sep}\$_ESSID${sep}$NETWORK${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
+        sed -i "s${sep}\$_ESSID${sep}${NETWORK}${sep}g" $USER_NETWORK_DIR/$NETWORK.cfg 
 
         #get the other parameters name
         arglist=`grep "\\$_" $TEMPLATES_DIR/$type|grep -v ESSID |\
@@ -99,11 +98,11 @@ choose_and_configure(){
 
         for i in $arglist;
         do
-            arg_name=`echo $i|sed "s/\$_//"`
+            arg_name=`echo $i|sed 's/$_//'`
             #configure parameter in the template copy
             data=`echo ""|dmenu -p "$arg_name:"` #ask parameter
             sep=`select_separator "$data"`
-            sed -i s${sep}$i${sep}$data${sep}g $USER_NETWORK_DIR/$NETWORK.cfg
+            sed -i "s${sep}${i}${sep}${data}${sep}g" $USER_NETWORK_DIR/$NETWORK.cfg
         done
         simple_logger info "$NETWORK configured by user"
     fi
