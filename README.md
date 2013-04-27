@@ -75,5 +75,5 @@ ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
 Now, you can run wifish as a normal user
 
 ```bash
-me@my-host # wifish
+me@my-host $ wifish
 ```
