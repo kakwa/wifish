@@ -1,0 +1,62 @@
+#!/bin/sh
+
+DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
+
+. $DEFAULT_CONFIG_FILE
+
+do_start(){
+    if [ -f "$WIFISHD_PID_FILE" ]
+    then echo "wifishd already started"
+        exit 1
+    else
+        wifishd &
+        echo "wifishd started"
+    fi
+}
+
+do_stop(){
+    if [ -f "$DHCP_PID_FILE" ]
+    then
+        kill `cat $DHCP_PID_FILE`
+    fi
+    if [ -f "$WPA_SUPPLICANT_PID_FILE" ]
+    then
+        kill `cat $WPA_SUPPLICANT_PID_FILE`
+    fi
+    if [ -f "$WIFISHD_PID_FILE" ]
+    then
+        kill `cat $WIFISHD_PID_FILE`
+    fi
+    rm -f $WPA_SUPPLICANT_PID_FILE $DHCP_PID_FILE $WIFISHD_PID_FILE
+    echo "wifishd stoped"
+}
+
+do_status(){
+    if [ -f "$WIFISHD_PID_FILE" ]
+    then
+        echo "wifishd is running, pid: `cat $WIFISHD_PID_FILE`"
+    else
+        echo "wifishd is not running"
+    fi
+
+}
+
+case "$1" in
+  start)
+    do_start
+    ;;
+  restart|reload|force-reload)
+    do_stop
+    do_start
+    ;;
+  stop)
+    do_stop
+    ;;
+  status)
+    do_status
+    ;;
+  *)
+    echo "Usage: $0 start|stop|restart|status" >&2
+    exit 3
+    ;;
+esac
