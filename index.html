@@ -3,34 +3,34 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
 
     <title>Wifish by kakwa</title>
   </head>
 
   <body>
-
     <header>
-      <div class="container">
+      <div class="inner">
         <h1>Wifish</h1>
         <h2>wifish are small scripts to get ride of wicd/NetworkManager</h2>
-
-        <section id="downloads">
-          <a href="https://github.com/kakwa/wifish/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/kakwa/wifish/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/kakwa/wifish" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-        </section>
+        <a href="https://github.com/kakwa/wifish" class="button"><small>View project on</small>GitHub</a>
       </div>
     </header>
 
-    <div class="container">
-      <section id="main_content">
-        <h1>Wifish</h1>
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>Wifish</h1>
 
-<p>Wifish is two small scripts to get ride of wicd/NetworkManager.</p>
+<p>Wifish is small shell scripts to get ride of wicd/NetworkManager.</p>
 
 <h2>License</h2>
 
@@ -48,9 +48,16 @@ it interactively configures it (it creates a wpa_supplicant
 configuration file), and it establishes a connexion with this network.</p></li>
 <li><p>wifishd: a daemon that scans regulary networks and connects 
 to one if it's already configured.</p></li>
-</ul><p>It also installs <code>wifish</code> which is a simple wrapper arround <code>sudo wifish-cfg</code>.</p>
+</ul><p>It also installs <code>wifish</code> which is a simple wrapper around <code>sudo wifish-cfg</code> and a simple init script for wifishd.</p>
 
 <h2>Installation</h2>
+
+<h3>Dependancies</h3>
+
+<p>Wifish relies on <code>dmenu</code>, <code>iwlist</code>, <code>wpa_supplicant</code>, 
+<code>iwconfig</code>, a dhcp client (tested with <code>dhclient</code>) and <code>ifconfig</code>.</p>
+
+<h3>Make</h3>
 
 <p>Just run as root:</p>
 
@@ -59,15 +66,77 @@ to one if it's already configured.</p></li>
 
 <h2>Configuration</h2>
 
-<p>Some parameters could be configured in <code>/etc/wifish/wifish.conf</code> (default location).</p>
+<p>Some wifish parameters could be configured in <code>/etc/wifish/wifish.conf</code> (default location).</p>
+
+<p>It's mainly stuff like path to pid files.</p>
 
 <p>The configured networks are stored in <code>/etc/wifish/networks/</code>.</p>
 
-<h2>Template</h2>
+<h2>wifishd</h2>
+
+<p>wifishd is a daemon that connects automaticaly to already configured networks.</p>
+
+<h3>starting wifishd</h3>
+
+<p>Wifish provides a (too?) simple init script to start or stop wifishd:</p>
+
+<div class="highlight"><pre><span class="c">#start wifisihd</span>
+/etc/init.d/wifishd start
+<span class="c">#stop wifishd</span>
+/etc/init.d/wifishd stop
+<span class="c">#restart wifishd</span>
+/etc/init.d/wifishd restart
+<span class="c">#show if it's running or not</span>
+/etc/init.d/wifishd status
+</pre></div>
+
+<p>Making wifishd start at boot:</p>
+
+<div class="highlight"><pre><span class="c">#on debian</span>
+update-rc.d wifishd start
+</pre></div>
+
+<h2>wifish-cfg</h2>
+
+<p>wifish-cfg is the tool that interactively configures networks and connect to networks.</p>
+
+<h3>using wifish-cfg</h3>
+
+<p>As root, just run:</p>
+
+<pre><code>wifish-cfg
+</code></pre>
+
+<p>and select what you need.</p>
+
+<h3>Sudo configuration</h3>
+
+<p>If you don't trust my script, it should be run as root.</p>
+
+<p>If you trust my script (you shouldn't) you could 
+add something like that in your /etc/sudoers:</p>
+
+<pre><code>ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
+</code></pre>
+
+<p>Now, you can run wifish-cfg as a normal user </p>
+
+<div class="highlight"><pre>me@my-host <span class="nv">$ </span>sudo wifish-cfg
+<span class="c">#or using the provided sudo wrapper:</span>
+me@my-host <span class="nv">$ </span>wifish
+</pre></div>
+
+<h3>Modifying a network</h3>
+
+<p>wifish doesn't provide anything for that, you must edit your network file manually inside <code>/etc/wifish/networks/</code>.</p>
+
+<p>It's the same if you want to remove a configured network.</p>
+
+<h2>About templates</h2>
 
 <p>The template directory is <code>/etc/wifish/templates/</code>.</p>
 
-<p>Template format is the following:</p>
+<p>Template example:</p>
 
 <pre><code>ctrl_interface=/var/run/wpa_supplicant
 network={
@@ -81,30 +150,26 @@ network={
 }
 </code></pre>
 
-<p>The Variables are marked by <code>$_&lt;VARIABLE_NAME&gt;</code></p>
+<p>You could easily create new templates, wifish will automatically get the variables in your template. <code>$_ESSID</code> must be present and the variables must be marked by <code>$_&lt;VARIABLE_NAME&gt;</code>.</p>
+        </section>
 
-<h2>Dependancies</h2>
+        <aside id="sidebar">
+          <a href="https://github.com/kakwa/wifish/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/kakwa/wifish/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
 
-<p>Wifish relies on <code>dmenu</code>, <code>iwlist</code>, <code>wpa_supplicant</code>, 
-<code>iwconfig</code>, a dhcp client (tested with <code>dhclient</code>) and <code>ifconfig</code>.</p>
+          <p class="repo-owner"><a href="https://github.com/kakwa/wifish"></a> is maintained by <a href="https://github.com/kakwa">kakwa</a>.</p>
 
-<h2>Sudo configuration</h2>
-
-<p>If you don't trust my script, it should be run as root.</p>
-
-<p>If you trust my script (you shouldn't) you could 
-add something like that in your /etc/sudoers:</p>
-
-<pre><code>ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
-</code></pre>
-
-<p>Now, you can run wifish as a normal user</p>
-
-<div class="highlight"><pre>me@my-host <span class="c"># wifish</span>
-</pre></div>
-      </section>
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
     </div>
 
-    
+  
   </body>
 </html>
