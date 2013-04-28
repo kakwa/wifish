@@ -23,6 +23,13 @@ It also installs `wifish` which is a simple wrapper arround `sudo wifish-cfg`.
 
 ## Installation ##
 
+### Dependancies ###
+
+Wifish relies on `dmenu`, `iwlist`, `wpa_supplicant`, 
+`iwconfig`, a dhcp client (tested with `dhclient`) and `ifconfig`.
+
+### Make ###
+
 Just run as root:
 
 ```
@@ -31,15 +38,82 @@ make install
 
 ## Configuration ##
 
-Some parameters could be configured in ```/etc/wifish/wifish.conf``` (default location).
+Some wifish parameters could be configured in ```/etc/wifish/wifish.conf``` (default location).
+
+It's mainly path to stuff like path to pid files.
 
 The configured networks are stored in ```/etc/wifish/networks/```.
 
-## Template ##
+## wifishd ##
+
+wifishd is a daemon that connects automaticaly to already configured networks.
+
+### starting wifishd ###
+
+Wifish provides a (too?) simple init script to start or stop wifishd:
+
+```bash
+#start wifisihd
+/etc/init.d/wifishd start
+#stop wifishd
+/etc/init.d/wifishd stop
+#restart wifishd
+/etc/init.d/wifishd restart
+#show if it's running or not
+/etc/init.d/wifishd status
+```
+
+Making wifishd start at boot:
+
+```bash
+#on debian
+update-rc.d wifishd start
+```
+
+## wifish-cfg ##
+
+wifish-cfg is the tool that interactively configures networks and connect to networks.
+
+### using wifish-cfg ###
+
+As root, just run:
+
+```
+wifish-cfg
+```
+
+and select what you need.
+
+### Sudo configuration ###
+
+If you don't trust my script, it should be run as root.
+
+If you trust my script (you shouldn't) you could 
+add something like that in your /etc/sudoers:
+
+```
+ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
+```
+
+Now, you can run wifish-cfg as a normal user 
+
+```bash
+me@my-host $ sudo wifish-cfg
+#or using the provided sudo wrapper:
+me@my-host $ wifish
+```
+
+### Modifying a network ###
+
+wifish doesn't provide anything for that, you must edit your network file manually inside ```/etc/wifish/networks/```.
+
+It's the same if you want to remove a configured network.
+
+## About templates ##
 
 The template directory is ```/etc/wifish/templates/```.
 
-Template format is the following:
+Template example:
 
 ```
 ctrl_interface=/var/run/wpa_supplicant
@@ -53,27 +127,5 @@ network={
     phase2="auth=PAP"
 }
 ```
+You could easily create new templates, wifish will automatically get the variables in your template. ```$_ESSID``` must be present and the variables must be marked by `$_<VARIABLE_NAME>`.
 
-The Variables are marked by `$_<VARIABLE_NAME>`
-
-## Dependancies ##
-
-Wifish relies on `dmenu`, `iwlist`, `wpa_supplicant`, 
-`iwconfig`, a dhcp client (tested with `dhclient`) and `ifconfig`.
-
-## Sudo configuration ##
-
-If you don't trust my script, it should be run as root.
-
-If you trust my script (you shouldn't) you could 
-add something like that in your /etc/sudoers:
-
-```
-ALL     ALL = NOPASSWD: /usr/sbin/wifish-cfg
-```
-
-Now, you can run wifish as a normal user
-
-```bash
-me@my-host $ wifish
-```
