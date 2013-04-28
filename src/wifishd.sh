@@ -1,10 +1,6 @@
 #path to the default configuration file
 DEFAULT_CONFIG_FILE="/etc/wifish/wifish.conf"
 
-#creation of the pid file
-mkdir -p /var/run/wifishd/
-echo $$ >/var/run/wifishd/wifishd.pid
-
 not_associated=1
 ESSID=""
 
@@ -38,6 +34,13 @@ search_AP(){
 
 #load the configuration
 . $DEFAULT_CONFIG_FILE
+
+#creation of the pid file
+mkdir -p `dirname $WIFISHD_PID_FILE`
+echo $$ >$WIFISHD_PID_FILE
+
+#get the corresponding number to log level
+NUM_LOG_LEVEL=`get_level_number $LOG_LEVEL`
 
 make_interface_up
 #infinite loop
