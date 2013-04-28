@@ -1,6 +1,6 @@
 # Wifish #
 
-Wifish is two small scripts to get ride of wicd/NetworkManager.
+Wifish is small shell scripts to get ride of wicd/NetworkManager.
 
 ## License ##
 
@@ -19,7 +19,7 @@ configuration file), and it establishes a connexion with this network.
 - wifishd: a daemon that scans regulary networks and connects 
 to one if it's already configured.
 
-It also installs `wifish` which is a simple wrapper arround `sudo wifish-cfg`.
+It also installs `wifish` which is a simple wrapper around `sudo wifish-cfg` and a simple init script for wifishd.
 
 ## Installation ##
 
@@ -40,7 +40,7 @@ make install
 
 Some wifish parameters could be configured in ```/etc/wifish/wifish.conf``` (default location).
 
-It's mainly path to stuff like path to pid files.
+It's mainly stuff like path to pid files.
 
 The configured networks are stored in ```/etc/wifish/networks/```.
 
