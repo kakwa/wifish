@@ -1,6 +1,6 @@
 # Wifish #
 
-Wifish is small shell scripts to get ride of wicd/NetworkManager.
+Wifish is a bunch of small shell scripts to get ride of wicd/NetworkManager.
 
 ## License ##
 
@@ -10,11 +10,7 @@ Wifish is released under the MIT Public License
 
 Wifish is two main things:
 
-- wifish-cfg: a command that handles connexion.
- in interactive mode, it proposes the available networks, 
-user select one, if the network has never been chosen, 
-it interactively configures it (it creates a wpa_supplicant 
-configuration file), and it establishes a connexion with this network.
+- wifish-cfg: an iteractive tool to configure/connect to a specific network.
 
 - wifishd: a daemon that scans regulary networks and connects 
 to one if it's already configured.
@@ -40,7 +36,7 @@ make install
 
 Some wifish parameters could be configured in ```/etc/wifish/wifish.conf``` (default location).
 
-It's mainly stuff like path to pid files.
+It's mainly stuff like path to pid files, dhcp client, templates or networks directories.
 
 The configured networks are stored in ```/etc/wifish/networks/```.
 
@@ -68,11 +64,20 @@ Making wifishd start at boot:
 ```bash
 #on debian
 update-rc.d wifishd start
+#on gentoo
+rc-update add wifishd default
 ```
 
 ## wifish-cfg ##
 
-wifish-cfg is the tool that interactively configures networks and connect to networks.
+wifish-cfg is the tool that handles connexion.
+ In interactive mode, it proposes the available networks, 
+user select one, if the network has never been chosen, 
+it interactively configures it (it creates a wpa_supplicant 
+configuration file), and it establishes a connexion with this network.
+
+It can be used non interactively with ```-n <netork name>``` option, it simply connects to the given network.
+The given network must have been configured previously.
 
 ### using wifish-cfg ###
 
